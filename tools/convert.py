@@ -41,12 +41,8 @@ def make_dataset(labels_file, images_dir, output_json_file, output_images_dir):
                 landmark[7] = label[14]   # l3_y
                 landmark[8] = label[16]   # l4_x
                 landmark[9] = label[17]   # l4_y
-            else:
-                landmark[0] = -1.0
             bbox = bbox.tolist()
             landmark = landmark.tolist()
-            if landmark[0] < 0:
-                landmark = None
             data[image_name].append({"bbox": bbox,
                                      "landmark": landmark})
     instances_json = dict(
@@ -90,7 +86,8 @@ def make_dataset(labels_file, images_dir, output_json_file, output_images_dir):
                 category_id=1,
                 bbox=annotation['bbox'],
                 area=annotation['bbox'][-1]*annotation['bbox'][-2],
-                landmark=annotation['landmark']
+                segmentation=annotation['landmark'],
+                iscrowd=0
             ))
     json.dump(instances_json, output, indent=2)
     input.close()
