@@ -6,9 +6,15 @@ import json
 import shutil
 from tqdm import tqdm
 import sys
+import argparse
 
-dataset_root = sys.argv[-1]
-destination_root = osp.join(sys.argv[-1], "widerface_coco")
+parser = argparse.ArgumentParser()
+parser.add_argument("-i", type=str, default="/data/junyanli/widerface/zip")
+parser.add_argument("-o", type=str, default="/data/junyanli/YOLOX/datasets/widerface_coco")
+args = parser.parse_args()
+
+dataset_root = args.i
+destination_root = args.o
 
 
 def make_dataset(labels_file, images_dir, output_json_file, output_images_dir):
