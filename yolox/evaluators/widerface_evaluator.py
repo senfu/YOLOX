@@ -153,7 +153,7 @@ class WiderFaceEvaluator:
         for data in data_list:
             cocoGt = self.dataloader.dataset.coco
             image_id = data["image_id"]
-            file_name = cocoGt.imgs[image_id]
+            file_name = cocoGt.imgs[image_id]['file_name']
             name = file_name[:-4]
             folder_name = "--".join(file_name.split("_")[:2])
             folder_name = osp.join("widerface", "pred", folder_name)
