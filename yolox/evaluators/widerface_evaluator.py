@@ -165,7 +165,7 @@ class WiderFaceEvaluator:
                     bbox=[],
                 )
             data_dict[name]["number"] += 1
-            data_dict[name]["bbox"].append(list(data['bbox'])+list(data['score']))
+            data_dict[name]["bbox"].append(list(data['bbox'])+[data['score']])
         for name in data_dict:
             folder_name = data_dict['folder_name']
             name = data_dict['name']
