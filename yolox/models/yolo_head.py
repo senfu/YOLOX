@@ -441,9 +441,10 @@ class YOLOXHead(nn.Module):
                 cls_preds.view(-1, self.num_classes)[fg_masks], cls_targets
             )
         ).sum() / num_fg
-        loss_pts = (
-            self.wingloss(pts_preds.view(-1, 10)[fg_masks], pts_targets)
-        ).sum() / num_fg
+        valid_inds =  (pts_targets.sum(-1)>0).nonzero()
+        pts_preds = pts_preds.view(-1, 10)[fg_masks][valid_inds]
+        pts_targets = pts_targets[valid_inds]
+        loss_pts = self.wingloss(pts_preds, pts_targets)
         if self.use_l1:
             loss_l1 = (
                 self.l1_loss(origin_preds.view(-1, 4)[fg_masks], l1_targets)
@@ -452,7 +453,7 @@ class YOLOXHead(nn.Module):
             loss_l1 = 0.0
 
         reg_weight = 5.0
-        loss_pts = loss_pts / 1000.0 * 4.0
+        loss_pts = loss_pts / 1000.0 * 2.0
         loss = reg_weight * loss_iou + loss_obj + loss_cls + loss_l1 + loss_pts
 
         return (

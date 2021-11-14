@@ -93,7 +93,7 @@ class WingLoss(nn.Module):
         losses = torch.where(
             delta < self.omega,
             self.omega * torch.log(1.0 + delta / self.epsilon), delta - self.C)
-        return torch.sum(losses, dim=-1)
+        return torch.mean(torch.sum(losses, dim=-1))
 
     def forward(self, output, target, target_weight=None):
         """Forward function.
