@@ -167,10 +167,10 @@ class WiderFaceEvaluator:
             data_dict[name]["number"] += 1
             data_dict[name]["bbox"].append(list(data['bbox'])+[data['score']])
         for name in data_dict:
-            folder_name = data_dict['folder_name']
-            name = data_dict['name']
-            number = data_dict['number']
-            bbox = data_dict['bbox']
+            folder_name = data_dict[name]['folder_name']
+            name = data_dict[name]['name']
+            number = data_dict[name]['number']
+            bbox = data_dict[name]['bbox']
             os.makedirs(folder_name, exist_ok=True)
             with open(osp.join(folder_name, name+".txt"), "w") as f:
                 f.write(f"{name}\n{number}\n")
