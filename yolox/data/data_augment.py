@@ -133,12 +133,16 @@ def random_affine(
     return img, targets
 
 
-def _mirror(image, boxes, prob=0.5):
+def _mirror(image, boxes, landmarks, prob=0.5):
     _, width, _ = image.shape
+    valid_landmark = np.expand_dims(landmarks.sum(-1) > 0, 1).repeat(10, 1)
+
     if random.random() < prob:
         image = image[:, ::-1]
         boxes[:, 0::2] = width - boxes[:, 2::-2]
-    return image, boxes
+        landmarks[:, 0::2] = width - landmarks[:, -2::-2]
+        landmarks = np.where(valid_landmark, landmarks, -1)
+    return image, boxes, landmarks
 
 
 def preproc(img, input_size, swap=(2, 0, 1)):
@@ -167,10 +171,11 @@ class TrainTransform:
         self.hsv_prob = hsv_prob
 
     def __call__(self, image, targets, input_dim):
-        boxes = targets[:, :4].copy()
-        labels = targets[:, 4].copy()
+        boxes     = targets[:, :4].copy()
+        labels    = targets[:,  4].copy()
+        landmarks = targets[:, 5:].copy()
         if len(boxes) == 0:
-            targets = np.zeros((self.max_labels, 5), dtype=np.float32)
+            targets = np.zeros((self.max_labels, 4+1+10), dtype=np.float32)
             image, r_o = preproc(image, input_dim)
             return image, targets
 
@@ -181,30 +186,35 @@ class TrainTransform:
         labels_o = targets_o[:, 4]
         # bbox_o: [xyxy] to [c_x,c_y,w,h]
         boxes_o = xyxy2cxcywh(boxes_o)
+        landmarks_o = targets_o[:, 5:]
 
         if random.random() < self.hsv_prob:
             augment_hsv(image)
-        image_t, boxes = _mirror(image, boxes, self.flip_prob)
+        image_t, boxes, landmarks = _mirror(image, boxes, landmarks, self.flip_prob)
         height, width, _ = image_t.shape
         image_t, r_ = preproc(image_t, input_dim)
         # boxes [xyxy] 2 [cx,cy,w,h]
         boxes = xyxy2cxcywh(boxes)
         boxes *= r_
+        landmarks *= r_
 
         mask_b = np.minimum(boxes[:, 2], boxes[:, 3]) > 1
         boxes_t = boxes[mask_b]
         labels_t = labels[mask_b]
+        landmarks_t = landmarks[mask_b]
 
         if len(boxes_t) == 0:
             image_t, r_o = preproc(image_o, input_dim)
             boxes_o *= r_o
+            landmarks_o *= r_o
             boxes_t = boxes_o
+            landmarks_t = landmarks_o
             labels_t = labels_o
 
         labels_t = np.expand_dims(labels_t, 1)
 
-        targets_t = np.hstack((labels_t, boxes_t))
-        padded_labels = np.zeros((self.max_labels, 5))
+        targets_t = np.hstack((labels_t, boxes_t, landmarks_t))
+        padded_labels = np.zeros((self.max_labels, 1+4+10))
         padded_labels[range(len(targets_t))[: self.max_labels]] = targets_t[
             : self.max_labels
         ]
@@ -242,4 +252,4 @@ class ValTransform:
             img /= 255.0
             img -= np.array([0.485, 0.456, 0.406]).reshape(3, 1, 1)
             img /= np.array([0.229, 0.224, 0.225]).reshape(3, 1, 1)
-        return img, np.zeros((1, 5))
+        return img, np.zeros((1, 1+4+10))

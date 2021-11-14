@@ -131,15 +131,18 @@ class COCODataset(Dataset):
 
         num_objs = len(objs)
 
-        res = np.zeros((num_objs, 5))
+        res = np.zeros((num_objs, 4+1+10))
 
         for ix, obj in enumerate(objs):
             cls = self.class_ids.index(obj["category_id"])
             res[ix, 0:4] = obj["clean_bbox"]
             res[ix, 4] = cls
+            res[ix, 5:] = obj["segmentation"]
 
         r = min(self.img_size[0] / height, self.img_size[1] / width)
+        # import pdb;pdb.set_trace()
         res[:, :4] *= r
+        res[:, 5:] *= r
 
         img_info = (height, width)
         resized_info = (int(height * r), int(width * r))
@@ -184,7 +187,6 @@ class COCODataset(Dataset):
             img = pad_img[: resized_info[0], : resized_info[1], :].copy()
         else:
             img = self.load_resized_img(index)
-
         return img, res.copy(), img_info, np.array([id_])
 
     @Dataset.mosaic_getitem

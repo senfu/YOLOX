@@ -89,6 +89,7 @@ class MosaicDetection(Dataset):
             # 3 additional image indices
             indices = [idx] + [random.randint(0, len(self._dataset) - 1) for _ in range(3)]
 
+            valid_landmark = []
             for i_mosaic, index in enumerate(indices):
                 img, _labels, _, img_id = self._dataset.pull_item(index)
                 h0, w0 = img.shape[:2]  # orig hw
@@ -112,11 +113,15 @@ class MosaicDetection(Dataset):
                 labels = _labels.copy()
                 # Normalized xywh to pixel xyxy format
                 if _labels.size > 0:
-                    labels[:, 0] = scale * _labels[:, 0] + padw
-                    labels[:, 1] = scale * _labels[:, 1] + padh
-                    labels[:, 2] = scale * _labels[:, 2] + padw
-                    labels[:, 3] = scale * _labels[:, 3] + padh
+                    pad = np.array([padw, padh]*2 + [0] + [padw, padh]*5)
+                    pad = np.expand_dims(pad, 0).repeat(len(labels), axis=0)
+                    labels = scale * labels + pad
                 mosaic_labels.append(labels)
+                for i in range(len(_labels)):
+                    if _labels[i][5] < 0:
+                        valid_landmark.append(False)
+                    else:
+                        valid_landmark.append(True)
 
             if len(mosaic_labels):
                 mosaic_labels = np.concatenate(mosaic_labels, 0)
@@ -124,16 +129,29 @@ class MosaicDetection(Dataset):
                 np.clip(mosaic_labels[:, 1], 0, 2 * input_h, out=mosaic_labels[:, 1])
                 np.clip(mosaic_labels[:, 2], 0, 2 * input_w, out=mosaic_labels[:, 2])
                 np.clip(mosaic_labels[:, 3], 0, 2 * input_h, out=mosaic_labels[:, 3])
-
-            mosaic_img, mosaic_labels = random_affine(
-                mosaic_img,
-                mosaic_labels,
-                target_size=(input_w, input_h),
-                degrees=self.degrees,
-                translate=self.translate,
-                scales=self.scale,
-                shear=self.shear,
-            )
+                for k in range(len(mosaic_labels)):
+                    landmark_clean = True
+                    if not valid_landmark[k]:
+                        landmark_clean = False
+                        break
+                    for i in range(5,15):
+                        if i%2 == 1 and (mosaic_labels[k, i] < 0 or mosaic_labels[k, i] > 2 * input_w):
+                            landmark_clean = False
+                            break
+                        if i%2 == 0 and (mosaic_labels[k, i] < 0 or mosaic_labels[k, i] > 2 * input_h):
+                            landmark_clean = False
+                            break
+                    if not landmark_clean:
+                        mosaic_labels[k, 5:] = -1.0
+            # mosaic_img, mosaic_labels = random_affine(
+            #     mosaic_img,
+            #     mosaic_labels,
+            #     target_size=(input_w, input_h),
+            #     degrees=self.degrees,
+            #     translate=self.translate,
+            #     scales=self.scale,
+            #     shear=self.shear,
+            # )
 
             # -----------------------------------------------------------------
             # CopyPaste: https://arxiv.org/abs/2012.07177
@@ -226,7 +244,7 @@ class MosaicDetection(Dataset):
 
         cls_labels = cp_labels[:, 4:5].copy()
         box_labels = cp_bboxes_transformed_np
-        labels = np.hstack((box_labels, cls_labels))
+        labels = np.hstack((box_labels, cls_labels, -np.ones((box_labels.shape[0], 10))))
         origin_labels = np.vstack((origin_labels, labels))
         origin_img = origin_img.astype(np.float32)
         origin_img = 0.5 * origin_img + 0.5 * padded_cropped_img.astype(np.float32)

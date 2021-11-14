@@ -13,7 +13,8 @@ class Exp(MyExp):
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
 
         # Define yourself dataset path
-        self.data_dir = "/dev/shm/widerface_coco"
+        # self.data_dir = "/dev/shm/widerface_coco"
+        self.data_dir = "datasets/widerface_coco"
         self.train_ann = "instances_train2017.json"
         self.val_ann = "instances_val2017.json"
         self.num_classes = 1

@@ -4,6 +4,7 @@
 
 import torch
 import torch.nn as nn
+import math
 
 
 class IOUloss(nn.Module):
@@ -92,7 +93,7 @@ class WingLoss(nn.Module):
         losses = torch.where(
             delta < self.omega,
             self.omega * torch.log(1.0 + delta / self.epsilon), delta - self.C)
-        return torch.mean(torch.sum(losses, dim=[1, 2]), dim=0)
+        return torch.sum(losses, dim=-1)
 
     def forward(self, output, target, target_weight=None):
         """Forward function.
