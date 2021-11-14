@@ -154,8 +154,8 @@ class WiderFaceEvaluator:
             cocoGt = self.dataloader.dataset.coco
             image_id = data["image_id"]
             file_name = cocoGt.imgs[image_id]['file_name']
-            name = file_name[:-4]
-            folder_name = "--".join(file_name.split("_")[:2])
+            name = file_name.split("==")[1][:-4]
+            folder_name = file_name.split("==")[0]
             folder_name = osp.join("widerface", "pred", folder_name)
             if name not in data_dict:
                 data_dict[name] = dict(

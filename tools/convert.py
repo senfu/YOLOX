@@ -70,14 +70,15 @@ def make_dataset(labels_file, images_dir, output_json_file, output_images_dir):
         height = image.height
         width = image.width
         image_id_cnt += 1
+        file_name = image_folder+"=="+image_name
         instances_json["images"].append(dict(
             date_captured="2021",
-            file_name=image_name,
+            file_name=file_name,
             id=image_id_cnt,
             height=height,
             width=width
         ))
-        shutil.copy(image_full_path, osp.join(output_images_dir, image_name))
+        shutil.copy(image_full_path, osp.join(output_images_dir, file_name))
         for annotation in annotations:
             annotation_id_cnt += 1
             instances_json["annotations"].append(dict(
