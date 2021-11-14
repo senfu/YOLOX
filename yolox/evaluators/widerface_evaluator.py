@@ -144,6 +144,6 @@ class WiderFaceEvaluator:
                 data_list.append(pred_data)
         return data_list
     
-    def store_prediction(data_list, statistics):
+    def store_prediction(self, data_list, statistics):
         import pdb;pdb.set_trace()
         pass
