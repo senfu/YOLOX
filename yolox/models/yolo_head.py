@@ -441,7 +441,7 @@ class YOLOXHead(nn.Module):
                 cls_preds.view(-1, self.num_classes)[fg_masks], cls_targets
             )
         ).sum() / num_fg
-        valid_inds =  (pts_targets.sum(-1)>0).nonzero()
+        valid_inds =  (pts_targets.sum(-1)>0).nonzero().reshape(-1)
         pts_preds = pts_preds.view(-1, 10)[fg_masks][valid_inds]
         pts_targets = pts_targets[valid_inds]
         loss_pts = self.wingloss(pts_preds, pts_targets)
