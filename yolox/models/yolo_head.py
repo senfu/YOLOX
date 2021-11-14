@@ -452,6 +452,7 @@ class YOLOXHead(nn.Module):
             loss_l1 = 0.0
 
         reg_weight = 5.0
+        loss_pts = loss_pts / 1000.0 * 4.0
         loss = reg_weight * loss_iou + loss_obj + loss_cls + loss_l1 + loss_pts
 
         return (
