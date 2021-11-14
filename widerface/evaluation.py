@@ -268,6 +268,7 @@ def evaluation(pred, gt_path, iou_thresh=0.5):
     print("Medium Val AP: {}".format(aps[1]))
     print("Hard   Val AP: {}".format(aps[2]))
     print("=================================================")
+    return f"easy AP: {aps[0]}\nmedium AP: {aps[1]}\nhard AP: {aps[2]}\n"
 
 
 if __name__ == '__main__':

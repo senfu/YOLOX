@@ -112,10 +112,10 @@ class WiderFaceEvaluator:
 
         self.store_prediction(data_list, statistics)
         from widerface.evaluation import evaluation
-        evaluation(pred="./widerface/pred", gt_path="./widerface/gt")
+        info = evaluation(pred="./widerface/pred", gt_path="./widerface/gt")
         synchronize()
-        return 0, 0, 0
-
+        return 0, 0, info
+    
     def convert_to_coco_format(self, outputs, info_imgs, ids):
         data_list = []
         for (output, img_h, img_w, img_id) in zip(
