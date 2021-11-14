@@ -9,6 +9,8 @@ import torch
 import torch.distributed as dist
 import torch.nn as nn
 
+from yolox.evaluators import widerface_evaluator
+
 from .base_exp import BaseExp
 
 
@@ -266,18 +268,29 @@ class Exp(BaseExp):
 
         return val_loader
 
-    def get_evaluator(self, batch_size, is_distributed, testdev=False, legacy=False):
+    def get_evaluator(self, batch_size, is_distributed, testdev=False, legacy=False, face=False):
         from yolox.evaluators import COCOEvaluator
+        from yolox.evaluators import WiderFaceEvaluator
 
         val_loader = self.get_eval_loader(batch_size, is_distributed, testdev, legacy)
-        evaluator = COCOEvaluator(
-            dataloader=val_loader,
-            img_size=self.test_size,
-            confthre=self.test_conf,
-            nmsthre=self.nmsthre,
-            num_classes=self.num_classes,
-            testdev=testdev,
-        )
+        if face:
+            evaluator = WiderFaceEvaluator(
+                dataloader=val_loader,
+                img_size=self.test_size,
+                confthre=self.test_conf,
+                nmsthre=self.nmsthre,
+                num_classes=self.num_classes,
+                testdev=testdev,
+            )
+        else:
+            evaluator = COCOEvaluator(
+                dataloader=val_loader,
+                img_size=self.test_size,
+                confthre=self.test_conf,
+                nmsthre=self.nmsthre,
+                num_classes=self.num_classes,
+                testdev=testdev,
+            )
         return evaluator
 
     def eval(self, model, evaluator, is_distributed, half=False):

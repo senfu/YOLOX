@@ -142,7 +142,7 @@ def main(exp, args, num_gpu):
     logger.info("Model Summary: {}".format(get_model_info(model, exp.test_size)))
     logger.info("Model Structure:\n{}".format(str(model)))
 
-    evaluator = exp.get_evaluator(args.batch_size, is_distributed, args.test, args.legacy)
+    evaluator = exp.get_evaluator(args.batch_size, is_distributed, args.test, args.legacy, face=True)
 
     torch.cuda.set_device(rank)
     model.cuda(rank)

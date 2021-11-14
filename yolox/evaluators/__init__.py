@@ -4,3 +4,4 @@
 
 from .coco_evaluator import COCOEvaluator
 from .voc_evaluator import VOCEvaluator
+from .widerface_evaluator import WiderFaceEvaluator
