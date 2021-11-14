@@ -10,6 +10,8 @@ import tempfile
 import time
 from loguru import logger
 from tqdm import tqdm
+import os
+import os.path as osp
 
 import torch
 
@@ -108,9 +110,11 @@ class WiderFaceEvaluator:
             data_list = list(itertools.chain(*data_list))
             torch.distributed.reduce(statistics, dst=0)
 
-        eval_results = self.store_prediction(data_list, statistics)
+        self.store_prediction(data_list, statistics)
+        from widerface.evaluation import evaluation
+        evaluation(pred="./widerface/pred", gt_path="./widerface/gt")
         synchronize()
-        return eval_results
+        return 0, 0, 0
 
     def convert_to_coco_format(self, outputs, info_imgs, ids):
         data_list = []
@@ -145,5 +149,33 @@ class WiderFaceEvaluator:
         return data_list
     
     def store_prediction(self, data_list, statistics):
-        import pdb;pdb.set_trace()
-        pass
+        data_dict = {}
+        for data in data_list:
+            cocoGt = self.dataloader.dataset.coco
+            image_id = data["image_id"]
+            file_name = cocoGt.imgs[image_id]
+            name = file_name[:-4]
+            folder_name = "--".join(file_name.split("_")[:2])
+            folder_name = osp.join("widerface", "pred", folder_name)
+            if name not in data_dict:
+                data_dict[name] = dict(
+                    folder_name=folder_name,
+                    name=name,
+                    number=0,
+                    bbox=[],
+                )
+            data_dict[name]["number"] += 1
+            data_dict[name]["bbox"].append(list(data['bbox'])+list(data['score']))
+        for name in data_dict:
+            folder_name = data_dict['folder_name']
+            name = data_dict['name']
+            number = data_dict['number']
+            bbox = data_dict['bbox']
+            os.makedirs(folder_name, exist_ok=True)
+            with open(osp.join(folder_name, name+".txt"), "w") as f:
+                f.write(f"{name}\n{number}\n")
+                for b in bbox:
+                    x,y,w,h,conf = b
+                    f.write(f"{x} {y} {w} {h} {conf}\n")
+            
+            
